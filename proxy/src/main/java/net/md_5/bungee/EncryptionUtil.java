@@ -18,8 +18,8 @@ import net.md_5.bungee.jni.NativeCode;
 import net.md_5.bungee.jni.cipher.BungeeCipher;
 import net.md_5.bungee.jni.cipher.JavaCipher;
 import net.md_5.bungee.jni.cipher.NativeCipher;
-import net.md_5.bungee.protocol.packet.EncryptionResponse;
 import net.md_5.bungee.protocol.packet.EncryptionRequest;
+import net.md_5.bungee.protocol.packet.EncryptionResponse;
 
 /**
  * Class containing all encryption related methods for the proxy.
@@ -31,7 +31,7 @@ public class EncryptionUtil
     public static final KeyPair keys;
     @Getter
     private static final SecretKey secret = new SecretKeySpec( new byte[ 16 ], "AES" );
-    public static final NativeCode<BungeeCipher> nativeFactory = new NativeCode( "native-cipher", JavaCipher.class, NativeCipher.class );
+    public static final NativeCode<BungeeCipher> nativeFactory = new NativeCode<>( "native-cipher", JavaCipher.class, NativeCipher.class );
 
     static
     {

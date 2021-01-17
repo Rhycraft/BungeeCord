@@ -7,11 +7,10 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
-import net.md_5.bungee.api.chat.BaseComponent;
-import net.md_5.bungee.api.chat.TranslatableComponent;
-
 import java.lang.reflect.Type;
 import java.util.Arrays;
+import net.md_5.bungee.api.chat.BaseComponent;
+import net.md_5.bungee.api.chat.TranslatableComponent;
 
 public class TranslatableComponentSerializer extends BaseComponentSerializer implements JsonSerializer<TranslatableComponent>, JsonDeserializer<TranslatableComponent>
 {
@@ -22,10 +21,14 @@ public class TranslatableComponentSerializer extends BaseComponentSerializer imp
         TranslatableComponent component = new TranslatableComponent();
         JsonObject object = json.getAsJsonObject();
         deserialize( object, component, context );
+        if ( !object.has( "translate" ) )
+        {
+            throw new JsonParseException( "Could not parse JSON: missing 'translate' property" );
+        }
         component.setTranslate( object.get( "translate" ).getAsString() );
         if ( object.has( "with" ) )
         {
-            component.setWith( Arrays.asList( (BaseComponent[]) context.deserialize( object.get( "with" ), BaseComponent[].class ) ) );
+            component.setWith( Arrays.asList( context.<BaseComponent[]>deserialize( object.get( "with" ), BaseComponent[].class ) ) );
         }
         return component;
     }

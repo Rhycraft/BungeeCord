@@ -1,7 +1,6 @@
 package net.md_5.bungee.forge;
 
 import java.util.ArrayDeque;
-
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -68,6 +67,7 @@ public class ForgeServerHandler
      * Receives a {@link PluginMessage} from ForgeClientData to pass to Server.
      *
      * @param message The message to being received.
+     * @throws IllegalArgumentException if invalid packet received
      */
     public void receive(PluginMessage message) throws IllegalArgumentException
     {
@@ -82,7 +82,7 @@ public class ForgeServerHandler
     {
         serverForge = true;
     }
-    
+
 
     /**
      * Returns whether the handshake is complete.

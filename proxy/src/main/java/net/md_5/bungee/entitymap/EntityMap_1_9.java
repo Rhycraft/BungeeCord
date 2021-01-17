@@ -2,13 +2,12 @@ package net.md_5.bungee.entitymap;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.netty.buffer.ByteBuf;
+import java.util.UUID;
 import net.md_5.bungee.BungeeCord;
 import net.md_5.bungee.UserConnection;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.protocol.DefinedPacket;
 import net.md_5.bungee.protocol.ProtocolConstants;
-
-import java.util.UUID;
 
 class EntityMap_1_9 extends EntityMap
 {
@@ -146,6 +145,11 @@ class EntityMap_1_9 extends EntityMap
                     DefinedPacket.readVarInt( packet );
                     rewriteInt( packet, oldId, newId, packet.readerIndex() );
                 }
+                break;
+            case 0x39 /* EntityMetadata : PacketPlayOutEntityMetadata */:
+                DefinedPacket.readVarInt( packet ); // Entity ID
+                rewriteMetaVarInt( packet, oldId + 1, newId + 1, 5 ); // fishing hook
+                rewriteMetaVarInt( packet, oldId, newId, 12 ); // guardian beam
                 break;
         }
         packet.readerIndex( readerIndex );

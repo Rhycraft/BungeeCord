@@ -1,18 +1,18 @@
 package net.md_5.bungee.api.chat;
 
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import net.md_5.bungee.api.ChatColor;
-
 import java.util.ArrayList;
 import java.util.List;
+import lombok.AccessLevel;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.ToString;
+import net.md_5.bungee.api.ChatColor;
+import net.md_5.bungee.api.chat.ComponentBuilder.FormatRetention;
 
 @Setter
 @ToString(exclude = "parent")
-@NoArgsConstructor
+@EqualsAndHashCode(exclude = "parent")
 public abstract class BaseComponent
 {
 
@@ -23,6 +23,10 @@ public abstract class BaseComponent
      * The color of this component and any child components (unless overridden)
      */
     private ChatColor color;
+    /**
+     * The font of this component and any child components (unless overridden)
+     */
+    private String font;
     /**
      * Whether this component and any child components (unless overridden) is
      * bold
@@ -62,40 +66,143 @@ public abstract class BaseComponent
     private List<BaseComponent> extra;
 
     /**
-     * The action to preform when this component (and child components) are
+     * The action to perform when this component (and child components) are
      * clicked
      */
     @Getter
     private ClickEvent clickEvent;
     /**
-     * The action to preform when this component (and child components) are
+     * The action to perform when this component (and child components) are
      * hovered over
      */
     @Getter
     private HoverEvent hoverEvent;
 
-    BaseComponent(BaseComponent old)
+    /**
+     * Default constructor.
+     *
+     * @deprecated for use by internal classes only, will be removed.
+     */
+    @Deprecated
+    public BaseComponent()
     {
-        copyFormatting( old );
     }
 
-    public void copyFormatting( BaseComponent component )
+    BaseComponent(BaseComponent old)
     {
-        setColor( component.getColorRaw() );
-        setBold( component.isBoldRaw() );
-        setItalic( component.isItalicRaw() );
-        setUnderlined( component.isUnderlinedRaw() );
-        setStrikethrough( component.isStrikethroughRaw() );
-        setObfuscated( component.isObfuscatedRaw() );
-        setInsertion( component.getInsertion() );
-        setClickEvent( component.getClickEvent() );
-        setHoverEvent( component.getHoverEvent() );
-        if ( component.getExtra() != null )
+        copyFormatting( old, FormatRetention.ALL, true );
+
+        if ( old.getExtra() != null )
         {
-            for ( BaseComponent extra : component.getExtra() )
+            for ( BaseComponent extra : old.getExtra() )
             {
                 addExtra( extra.duplicate() );
             }
+        }
+    }
+
+    /**
+     * Copies the events and formatting of a BaseComponent. Already set
+     * formatting will be replaced.
+     *
+     * @param component the component to copy from
+     */
+    public void copyFormatting(BaseComponent component)
+    {
+        copyFormatting( component, FormatRetention.ALL, true );
+    }
+
+    /**
+     * Copies the events and formatting of a BaseComponent.
+     *
+     * @param component the component to copy from
+     * @param replace if already set formatting should be replaced by the new
+     * component
+     */
+    public void copyFormatting(BaseComponent component, boolean replace)
+    {
+        copyFormatting( component, FormatRetention.ALL, replace );
+    }
+
+    /**
+     * Copies the specified formatting of a BaseComponent.
+     *
+     * @param component the component to copy from
+     * @param retention the formatting to copy
+     * @param replace if already set formatting should be replaced by the new
+     * component
+     */
+    public void copyFormatting(BaseComponent component, FormatRetention retention, boolean replace)
+    {
+        if ( retention == FormatRetention.EVENTS || retention == FormatRetention.ALL )
+        {
+            if ( replace || clickEvent == null )
+            {
+                setClickEvent( component.getClickEvent() );
+            }
+            if ( replace || hoverEvent == null )
+            {
+                setHoverEvent( component.getHoverEvent() );
+            }
+        }
+        if ( retention == FormatRetention.FORMATTING || retention == FormatRetention.ALL )
+        {
+            if ( replace || color == null )
+            {
+                setColor( component.getColorRaw() );
+            }
+            if ( replace || font == null )
+            {
+                setFont( component.getFontRaw() );
+            }
+            if ( replace || bold == null )
+            {
+                setBold( component.isBoldRaw() );
+            }
+            if ( replace || italic == null )
+            {
+                setItalic( component.isItalicRaw() );
+            }
+            if ( replace || underlined == null )
+            {
+                setUnderlined( component.isUnderlinedRaw() );
+            }
+            if ( replace || strikethrough == null )
+            {
+                setStrikethrough( component.isStrikethroughRaw() );
+            }
+            if ( replace || obfuscated == null )
+            {
+                setObfuscated( component.isObfuscatedRaw() );
+            }
+            if ( replace || insertion == null )
+            {
+                setInsertion( component.getInsertion() );
+            }
+        }
+    }
+
+    /**
+     * Retains only the specified formatting.
+     *
+     * @param retention the formatting to retain
+     */
+    public void retain(FormatRetention retention)
+    {
+        if ( retention == FormatRetention.FORMATTING || retention == FormatRetention.NONE )
+        {
+            setClickEvent( null );
+            setHoverEvent( null );
+        }
+        if ( retention == FormatRetention.EVENTS || retention == FormatRetention.NONE )
+        {
+            setColor( null );
+            setBold( null );
+            setItalic( null );
+            setUnderlined( null );
+            setStrikethrough( null );
+            setObfuscated( null );
+            setInsertion( null );
         }
     }
 
@@ -110,8 +217,15 @@ public abstract class BaseComponent
      * Clones the BaseComponent without formatting and returns the clone.
      *
      * @return The duplicate of this BaseComponent
+     * @deprecated API use discouraged, use traditional duplicate
      */
-    public abstract BaseComponent duplicateWithoutFormatting();
+    @Deprecated
+    public BaseComponent duplicateWithoutFormatting()
+    {
+        BaseComponent component = duplicate();
+        component.retain( FormatRetention.NONE );
+        return component;
+    }
 
     /**
      * Converts the components to a string that uses the old formatting codes
@@ -175,6 +289,36 @@ public abstract class BaseComponent
     public ChatColor getColorRaw()
     {
         return color;
+    }
+
+    /**
+     * Returns the font of this component. This uses the parent's font if this
+     * component doesn't have one.
+     *
+     * @return the font of this component, or null if default font
+     */
+    public String getFont()
+    {
+        if ( font == null )
+        {
+            if ( parent == null )
+            {
+                return null;
+            }
+            return parent.getFont();
+        }
+        return font;
+    }
+
+    /**
+     * Returns the font of this component without checking the parents font. May
+     * return null
+     *
+     * @return the font of this component
+     */
+    public String getFontRaw()
+    {
+        return font;
     }
 
     /**
@@ -355,7 +499,7 @@ public abstract class BaseComponent
      */
     public boolean hasFormatting()
     {
-        return color != null || bold != null
+        return color != null || font != null || bold != null
                 || italic != null || underlined != null
                 || strikethrough != null || obfuscated != null
                 || insertion != null || hoverEvent != null || clickEvent != null;
@@ -405,6 +549,31 @@ public abstract class BaseComponent
             {
                 e.toLegacyText( builder );
             }
+        }
+    }
+
+    void addFormat(StringBuilder builder)
+    {
+        builder.append( getColor() );
+        if ( isBold() )
+        {
+            builder.append( ChatColor.BOLD );
+        }
+        if ( isItalic() )
+        {
+            builder.append( ChatColor.ITALIC );
+        }
+        if ( isUnderlined() )
+        {
+            builder.append( ChatColor.UNDERLINE );
+        }
+        if ( isStrikethrough() )
+        {
+            builder.append( ChatColor.STRIKETHROUGH );
+        }
+        if ( isObfuscated() )
+        {
+            builder.append( ChatColor.MAGIC );
         }
     }
 }

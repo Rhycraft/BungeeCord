@@ -6,10 +6,13 @@ import java.util.UUID;
 import net.md_5.bungee.api.Callback;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.CommandSender;
+import net.md_5.bungee.api.ServerConnectRequest;
 import net.md_5.bungee.api.SkinConfiguration;
 import net.md_5.bungee.api.Title;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.config.ServerInfo;
+import net.md_5.bungee.api.event.ServerConnectEvent;
+import net.md_5.bungee.api.score.Scoreboard;
 
 /**
  * Represents a player who's connection is being connected to somewhere else,
@@ -78,6 +81,22 @@ public interface ProxiedPlayer extends Connection, CommandSender
     public void sendMessage(ChatMessageType position, BaseComponent message);
 
     /**
+     * Send a message to this player.
+     *
+     * @param sender the sender of the message
+     * @param message the message to send
+     */
+    public void sendMessage(UUID sender, BaseComponent... message);
+
+    /**
+     * Send a message to this player.
+     *
+     * @param sender the sender of the message
+     * @param message the message to send
+     */
+    public void sendMessage(UUID sender, BaseComponent message);
+
+    /**
      * Connects / transfers this user to the specified connection, gracefully
      * closing the current one. Depending on the implementation, this method
      * might return before the user has been connected.
@@ -92,11 +111,43 @@ public interface ProxiedPlayer extends Connection, CommandSender
      * might return before the user has been connected.
      *
      * @param target the new server to connect to
+     * @param reason the reason for connecting to the new server
+     */
+    void connect(ServerInfo target, ServerConnectEvent.Reason reason);
+
+    /**
+     * Connects / transfers this user to the specified connection, gracefully
+     * closing the current one. Depending on the implementation, this method
+     * might return before the user has been connected.
+     *
+     * @param target the new server to connect to
      * @param callback the method called when the connection is complete, or
      * when an exception is encountered. The boolean parameter denotes success
-     * or failure.
+     * (true) or failure (false).
      */
     void connect(ServerInfo target, Callback<Boolean> callback);
+
+    /**
+     * Connects / transfers this user to the specified connection, gracefully
+     * closing the current one. Depending on the implementation, this method
+     * might return before the user has been connected.
+     *
+     * @param target the new server to connect to
+     * @param callback the method called when the connection is complete, or
+     * when an exception is encountered. The boolean parameter denotes success
+     * (true) or failure (false).
+     * @param reason the reason for connecting to the new server
+     */
+    void connect(ServerInfo target, Callback<Boolean> callback, ServerConnectEvent.Reason reason);
+
+    /**
+     * Connects / transfers this user to the specified connection, gracefully
+     * closing the current one. Depending on the implementation, this method
+     * might return before the user has been connected.
+     *
+     * @param request request to connect with
+     */
+    void connect(ServerConnectRequest request);
 
     /**
      * Gets the server this player is connected to.
@@ -114,6 +165,10 @@ public interface ProxiedPlayer extends Connection, CommandSender
 
     /**
      * Send a plugin message to this player.
+     *
+     * In recent Minecraft versions channel names must contain a colon separator
+     * and consist of [a-z0-9/._-]. This will be enforced in a future version.
+     * The "BungeeCord" channel is an exception and may only take this form.
      *
      * @param channel the channel to send this data via
      * @param data the data to send
@@ -275,4 +330,11 @@ public interface ProxiedPlayer extends Connection, CommandSender
      * not occurred for this {@link ProxiedPlayer} yet.
      */
     Map<String, String> getModList();
+
+    /**
+     * Get the {@link Scoreboard} that belongs to this player.
+     *
+     * @return this player's {@link Scoreboard}
+     */
+    Scoreboard getScoreboard();
 }

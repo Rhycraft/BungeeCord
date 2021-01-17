@@ -1,20 +1,20 @@
 package net.md_5.bungee.api.chat;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import net.md_5.bungee.api.ChatColor;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import net.md_5.bungee.api.ChatColor;
 
 @Getter
 @Setter
 @AllArgsConstructor
-public class TextComponent extends BaseComponent
+@EqualsAndHashCode(callSuper = true)
+public final class TextComponent extends BaseComponent
 {
 
     private static final Pattern url = Pattern.compile( "^(?:(https?)://)?([-\\w_\\.]{2,}\\.[a-z]{2,4})(/\\S*)?$" );
@@ -29,6 +29,21 @@ public class TextComponent extends BaseComponent
      */
     public static BaseComponent[] fromLegacyText(String message)
     {
+        return fromLegacyText( message, ChatColor.WHITE );
+    }
+
+    /**
+     * Converts the old formatting system that used
+     * {@link net.md_5.bungee.api.ChatColor#COLOR_CHAR} into the new json based
+     * system.
+     *
+     * @param message the text to convert
+     * @param defaultColor color to use when no formatting is to be applied
+     * (i.e. after ChatColor.RESET).
+     * @return the components needed to print the message to the client
+     */
+    public static BaseComponent[] fromLegacyText(String message, ChatColor defaultColor)
+    {
         ArrayList<BaseComponent> components = new ArrayList<BaseComponent>();
         StringBuilder builder = new StringBuilder();
         TextComponent component = new TextComponent();
@@ -39,13 +54,36 @@ public class TextComponent extends BaseComponent
             char c = message.charAt( i );
             if ( c == ChatColor.COLOR_CHAR )
             {
-                i++;
+                if ( ++i >= message.length() )
+                {
+                    break;
+                }
                 c = message.charAt( i );
                 if ( c >= 'A' && c <= 'Z' )
                 {
                     c += 32;
                 }
-                ChatColor format = ChatColor.getByChar( c );
+                ChatColor format;
+                if ( c == 'x' && i + 12 < message.length() )
+                {
+                    StringBuilder hex = new StringBuilder( "#" );
+                    for ( int j = 0; j < 6; j++ )
+                    {
+                        hex.append( message.charAt( i + 2 + ( j * 2 ) ) );
+                    }
+                    try
+                    {
+                        format = ChatColor.of( hex.toString() );
+                    } catch ( IllegalArgumentException ex )
+                    {
+                        format = null;
+                    }
+
+                    i += 12;
+                } else
+                {
+                    format = ChatColor.getByChar( c );
+                }
                 if ( format == null )
                 {
                     continue;
@@ -58,29 +96,30 @@ public class TextComponent extends BaseComponent
                     builder = new StringBuilder();
                     components.add( old );
                 }
-                switch ( format )
+                if ( format == ChatColor.BOLD )
                 {
-                    case BOLD:
-                        component.setBold( true );
-                        break;
-                    case ITALIC:
-                        component.setItalic( true );
-                        break;
-                    case UNDERLINE:
-                        component.setUnderlined( true );
-                        break;
-                    case STRIKETHROUGH:
-                        component.setStrikethrough( true );
-                        break;
-                    case MAGIC:
-                        component.setObfuscated( true );
-                        break;
-                    case RESET:
-                        format = ChatColor.WHITE;
-                    default:
-                        component = new TextComponent();
-                        component.setColor( format );
-                        break;
+                    component.setBold( true );
+                } else if ( format == ChatColor.ITALIC )
+                {
+                    component.setItalic( true );
+                } else if ( format == ChatColor.UNDERLINE )
+                {
+                    component.setUnderlined( true );
+                } else if ( format == ChatColor.STRIKETHROUGH )
+                {
+                    component.setStrikethrough( true );
+                } else if ( format == ChatColor.MAGIC )
+                {
+                    component.setObfuscated( true );
+                } else if ( format == ChatColor.RESET )
+                {
+                    format = defaultColor;
+                    component = new TextComponent();
+                    component.setColor( format );
+                } else
+                {
+                    component = new TextComponent();
+                    component.setColor( format );
                 }
                 continue;
             }
@@ -114,17 +153,9 @@ public class TextComponent extends BaseComponent
             }
             builder.append( c );
         }
-        if ( builder.length() > 0 )
-        {
-            component.setText( builder.toString() );
-            components.add( component );
-        }
 
-        // The client will crash if the array is empty
-        if ( components.isEmpty() )
-        {
-            components.add( new TextComponent( "" ) );
-        }
+        component.setText( builder.toString() );
+        components.add( component );
 
         return components.toArray( new BaseComponent[ components.size() ] );
     }
@@ -162,7 +193,11 @@ public class TextComponent extends BaseComponent
      */
     public TextComponent(BaseComponent... extras)
     {
-        setText( "" );
+        this();
+        if ( extras.length == 0 )
+        {
+            return;
+        }
         setExtra( new ArrayList<BaseComponent>( Arrays.asList( extras ) ) );
     }
 
@@ -172,15 +207,9 @@ public class TextComponent extends BaseComponent
      * @return the duplicate of this TextComponent.
      */
     @Override
-    public BaseComponent duplicate()
+    public TextComponent duplicate()
     {
         return new TextComponent( this );
-    }
-
-    @Override
-    public BaseComponent duplicateWithoutFormatting()
-    {
-        return new TextComponent( this.text );
     }
 
     @Override
@@ -193,27 +222,7 @@ public class TextComponent extends BaseComponent
     @Override
     protected void toLegacyText(StringBuilder builder)
     {
-        builder.append( getColor() );
-        if ( isBold() )
-        {
-            builder.append( ChatColor.BOLD );
-        }
-        if ( isItalic() )
-        {
-            builder.append( ChatColor.ITALIC );
-        }
-        if ( isUnderlined() )
-        {
-            builder.append( ChatColor.UNDERLINE );
-        }
-        if ( isStrikethrough() )
-        {
-            builder.append( ChatColor.STRIKETHROUGH );
-        }
-        if ( isObfuscated() )
-        {
-            builder.append( ChatColor.MAGIC );
-        }
+        addFormat( builder );
         builder.append( text );
         super.toLegacyText( builder );
     }

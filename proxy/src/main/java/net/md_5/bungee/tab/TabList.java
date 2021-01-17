@@ -3,11 +3,8 @@ package net.md_5.bungee.tab;
 import lombok.RequiredArgsConstructor;
 import net.md_5.bungee.BungeeCord;
 import net.md_5.bungee.UserConnection;
-import net.md_5.bungee.api.chat.BaseComponent;
-import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.connection.LoginResult;
-import net.md_5.bungee.protocol.ProtocolConstants;
 import net.md_5.bungee.protocol.packet.PlayerListItem;
 
 @RequiredArgsConstructor
@@ -39,7 +36,7 @@ public abstract class TabList
             {
                 item.setUuid( player.getUniqueId() );
                 LoginResult loginResult = player.getPendingConnection().getLoginProfile();
-                if ( loginResult != null )
+                if ( loginResult != null && loginResult.getProperties() != null )
                 {
                     String[][] props = new String[ loginResult.getProperties().length ][];
                     for ( int i = 0; i < props.length; i++ )
@@ -60,7 +57,10 @@ public abstract class TabList
                 {
                     player.setGamemode( item.getGamemode() );
                 }
-                player.setPing( player.getPing() );
+                if ( playerListItem.getAction() == PlayerListItem.Action.ADD_PLAYER || playerListItem.getAction() == PlayerListItem.Action.UPDATE_LATENCY )
+                {
+                    player.setPing( item.getPing() );
+                }
             }
         }
         return playerListItem;

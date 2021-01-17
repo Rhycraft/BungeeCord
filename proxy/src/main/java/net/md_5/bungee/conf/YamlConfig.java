@@ -1,12 +1,15 @@
 package net.md_5.bungee.conf;
 
+import com.google.common.base.Charsets;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.InetSocketAddress;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -15,6 +18,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.logging.Level;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +31,7 @@ import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.util.CaseInsensitiveMap;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.error.YAMLException;
 
 public class YamlConfig implements ConfigurationAdapter
 {
@@ -41,7 +46,7 @@ public class YamlConfig implements ConfigurationAdapter
         GLOBAL(), GLOBAL_PING(), SERVER();
     }
     private final Yaml yaml;
-    private Map config;
+    private Map<String, Object> config;
     private final File file = new File( "config.yml" );
 
     public YamlConfig()
@@ -60,38 +65,44 @@ public class YamlConfig implements ConfigurationAdapter
 
             try ( InputStream is = new FileInputStream( file ) )
             {
-                config = (Map) yaml.load( is );
+                try
+                {
+                    config = (Map) yaml.load( is );
+                } catch ( YAMLException ex )
+                {
+                    throw new RuntimeException( "Invalid configuration encountered - this is a configuration error and NOT a bug! Please attempt to fix the error or see https://www.spigotmc.org/ for help.", ex );
+                }
             }
 
             if ( config == null )
             {
-                config = new CaseInsensitiveMap();
+                config = new CaseInsensitiveMap<>();
             } else
             {
-                config = new CaseInsensitiveMap( config );
+                config = new CaseInsensitiveMap<>( config );
             }
         } catch ( IOException ex )
         {
             throw new RuntimeException( "Could not load configuration!", ex );
         }
 
-        Map<String, Object> permissions = get( "permissions", new HashMap<String, Object>() );
-        if ( permissions.isEmpty() )
+        Map<String, Object> permissions = get( "permissions", null );
+        if ( permissions == null )
         {
-            permissions.put( "default", Arrays.asList( new String[]
+            set( "permissions.default", Arrays.asList( new String[]
             {
                 "bungeecord.command.server", "bungeecord.command.list"
             } ) );
-            permissions.put( "admin", Arrays.asList( new String[]
+            set( "permissions.admin", Arrays.asList( new String[]
             {
                 "bungeecord.command.alert", "bungeecord.command.end", "bungeecord.command.ip", "bungeecord.command.reload"
             } ) );
         }
 
-        Map<String, Object> groups = get( "groups", new HashMap<String, Object>() );
-        if ( groups.isEmpty() )
+        Map<String, Object> groups = get( "groups", null );
+        if ( groups == null )
         {
-            groups.put( "md_5", Collections.singletonList( "admin" ) );
+            set( "groups.md_5", Collections.singletonList( "admin" ) );
         }
     }
 
@@ -128,6 +139,11 @@ public class YamlConfig implements ConfigurationAdapter
         }
     }
 
+    private void set(String path, Object val)
+    {
+        set( path, val, config );
+    }
+
     @SuppressWarnings("unchecked")
     private void set(String path, Object val, Map submap)
     {
@@ -160,7 +176,7 @@ public class YamlConfig implements ConfigurationAdapter
     {
         try
         {
-            try ( FileWriter wr = new FileWriter( file ) )
+            try ( Writer wr = new OutputStreamWriter( new FileOutputStream( file ), Charsets.UTF_8 ) )
             {
                 yaml.dump( config, wr );
             }
@@ -202,7 +218,7 @@ public class YamlConfig implements ConfigurationAdapter
             String addr = get( "address", "localhost:25565", val );
             String motd = ChatColor.translateAlternateColorCodes( '&', get( "motd", "&1Just another BungeeCord - Forced Host", val ) );
             boolean restricted = get( "restricted", false, val );
-            InetSocketAddress address = Util.getAddr( addr );
+            SocketAddress address = Util.getAddr( addr );
             ServerInfo info = ProxyServer.getInstance().constructServerInfo( name, address, motd, restricted );
             ret.put( name, info );
         }
@@ -233,10 +249,10 @@ public class YamlConfig implements ConfigurationAdapter
             boolean forceDefault = get( "force_default_server", false, val );
             String host = get( "host", "0.0.0.0:25577", val );
             int tabListSize = get( "tab_size", 60, val );
-            InetSocketAddress address = Util.getAddr( host );
+            SocketAddress address = Util.getAddr( host );
             Map<String, String> forced = new CaseInsensitiveMap<>( get( "forced_hosts", forcedDef, val ) );
             String tabListName = get( "tab_list", "GLOBAL_PING", val );
-            DefaultTabList value = DefaultTabList.valueOf( tabListName.toUpperCase() );
+            DefaultTabList value = DefaultTabList.valueOf( tabListName.toUpperCase( Locale.ROOT ) );
             if ( value == null )
             {
                 value = DefaultTabList.GLOBAL_PING;

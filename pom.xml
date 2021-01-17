@@ -3,15 +3,9 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <parent>
-        <groupId>org.sonatype.oss</groupId>
-        <artifactId>oss-parent</artifactId>
-        <version>9</version>
-    </parent>
-
     <groupId>net.md-5</groupId>
     <artifactId>bungeecord-parent</artifactId>
-    <version>1.12-SNAPSHOT</version>
+    <version>1.16-R0.4-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>BungeeCord-Parent</name>
@@ -24,8 +18,8 @@
     </organization>
     <licenses>
         <license>
-            <name>The BSD 3-Clause License</name>
-            <url>http://opensource.org/licenses/BSD-3-Clause</url>
+            <name>Modified BSD 3-Clause License</name>
+            <url>https://github.com/SpigotMC/BungeeCord/blob/master/LICENSE</url>
             <distribution>repo</distribution>
         </license>
     </licenses>
@@ -70,11 +64,22 @@
         <url>https://travis-ci.org/HexagonMC/BungeeCord</url>
     </ciManagement>
 
+    <distributionManagement>
+        <snapshotRepository>
+            <id>sonatype-nexus-snapshots</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+        </snapshotRepository>
+        <repository>
+            <id>sonatype-nexus-staging</id>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+    </distributionManagement>
+
     <properties>
         <build.number>unknown</build.number>
-        <netty.version>4.1.15.Final</netty.version>
-        <maven.compiler.source>1.7</maven.compiler.source>
-        <maven.compiler.target>1.7</maven.compiler.target>
+        <netty.version>4.1.53.Final</netty.version>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
@@ -82,13 +87,13 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.12</version>
+            <version>4.13.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>20.0</version>
+            <version>21.0</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
@@ -100,7 +105,7 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>1.16.16</version>
+            <version>1.18.10</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
@@ -110,7 +115,7 @@
             <plugin>
                 <groupId>net.md-5</groupId>
                 <artifactId>scriptus</artifactId>
-                <version>0.3.1</version>
+                <version>0.4.1</version>
                 <configuration>
                     <format>git:${project.name}:${project.version}:%s:${build.number}</format>
                 </configuration>
@@ -124,9 +129,34 @@
                 </executions>
             </plugin>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>3.1.1</version>
+                <executions>
+                    <execution>
+                        <phase>process-classes</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <configLocation>checkstyle.xml</configLocation>
+                    <includeResources>false</includeResources>
+                    <includeTestSourceDirectory>true</includeTestSourceDirectory>
+                </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.puppycrawl.tools</groupId>
+                        <artifactId>checkstyle</artifactId>
+                        <version>8.36.2</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+            <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>animal-sniffer-maven-plugin</artifactId>
-                <version>1.15</version>
+                <version>1.19</version>
                 <executions>
                     <execution>
                         <phase>process-classes</phase>
@@ -138,48 +168,103 @@
                 <configuration>
                     <signature>
                         <groupId>org.codehaus.mojo.signature</groupId>
-                        <artifactId>java17</artifactId>
+                        <artifactId>java18</artifactId>
                         <version>1.0</version>
                     </signature>
                 </configuration>
             </plugin>
-            <!-- OSS Parent 9 uses 2.7, 2.10+ is broken anyway -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <version>2.7</version>
-            </plugin>
         </plugins>
-        <pluginManagement>
-            <plugins>
-                <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
-                <plugin>
-                    <groupId>org.eclipse.m2e</groupId>
-                    <artifactId>lifecycle-mapping</artifactId>
-                    <version>1.0.0</version>
-                    <configuration>
-                        <lifecycleMappingMetadata>
-                            <pluginExecutions>
-                                <pluginExecution>
-                                    <pluginExecutionFilter>
-                                        <groupId>net.md-5</groupId>
-                                        <artifactId>scriptus</artifactId>
-                                        <versionRange>[0.3.1,)</versionRange>
-                                        <goals>
-                                            <goal>describe</goal>
-                                        </goals>
-                                    </pluginExecutionFilter>
-                                    <action>
-                                        <execute>
-                                            <runOnIncremental>false</runOnIncremental>
-                                        </execute>
-                                    </action>
-                                </pluginExecution>
-                            </pluginExecutions>
-                        </lifecycleMappingMetadata>
-                    </configuration>
-                </plugin>
-            </plugins>
-        </pluginManagement>
     </build>
+
+    <profiles>
+        <profile>
+            <id>dist</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <version>3.2.1</version>
+                        <executions>
+                            <execution>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>jar-no-fork</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.projectlombok</groupId>
+                        <artifactId>lombok-maven-plugin</artifactId>
+                        <version>1.18.10.0</version>
+                        <executions>
+                            <execution>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>delombok</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <addOutputDirectory>false</addOutputDirectory>
+                            <outputDirectory>${project.build.directory}/delombok</outputDirectory>
+                            <sourceDirectory>${project.build.sourceDirectory}</sourceDirectory>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <version>3.2.0</version>
+                        <executions>
+                            <!-- Execute Javadoc once normally to catch any warnings -->
+                            <execution>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                            </execution>
+                            <!-- Then execute it again to generate properly with delombok -->
+                            <execution>
+                                <id>delombok</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                                <configuration>
+                                    <!-- lombok does not add @return or @param which causes warnings, so ignore -->
+                                    <doclint>none</doclint>
+                                    <sourcepath>${project.build.directory}/delombok</sourcepath>
+                                </configuration>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <quiet>true</quiet>
+                            <failOnWarnings>true</failOnWarnings>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>1.6</version>
+                        <executions>
+                            <execution>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>

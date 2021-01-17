@@ -17,11 +17,11 @@ public class Metrics extends TimerTask
     /**
      * The current revision number
      */
-    private final static int REVISION = 5;
+    private static final int REVISION = 5;
     /**
      * The base url of the metrics domain
      */
-    private static final String BASE_URL = "http://mcstats.org";
+    private static final String BASE_URL = "https://mcstats.spigotmc.org";
     /**
      * The url used to report a server's status
      */
@@ -29,7 +29,7 @@ public class Metrics extends TimerTask
     /**
      * Interval of time to ping (in minutes)
      */
-    final static int PING_INTERVAL = 10;
+    static final int PING_INTERVAL = 10;
     boolean firstPost = true;
 
     @Override
@@ -52,7 +52,10 @@ public class Metrics extends TimerTask
     }
 
     /**
-     * Generic method that posts a plugin to the metrics website
+     * Generic method that posts a plugin to the metrics website.
+     *
+     * @param isPing first post or not
+     * @throws IOException any errors encountered
      */
     private void postPlugin(boolean isPing) throws IOException
     {
@@ -110,6 +113,7 @@ public class Metrics extends TimerTask
      * @param buffer the StringBuilder to append the data pair onto
      * @param key the key value
      * @param value the value
+     * @throws UnsupportedEncodingException if UTF-8 encoding not supported
      */
     private static void encodeDataPair(final StringBuilder buffer, final String key, final String value) throws UnsupportedEncodingException
     {
@@ -121,6 +125,7 @@ public class Metrics extends TimerTask
      *
      * @param text the text to encode
      * @return the encoded text, as UTF-8
+     * @throws UnsupportedEncodingException if UTF-8 encoding not supported
      */
     private static String encode(final String text) throws UnsupportedEncodingException
     {

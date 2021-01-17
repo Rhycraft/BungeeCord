@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import lombok.RequiredArgsConstructor;
 import net.md_5.bungee.BungeeCord;
+import net.md_5.bungee.BungeeServerInfo;
 import net.md_5.bungee.api.Callback;
 import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.ServerPing;
@@ -13,11 +14,14 @@ import net.md_5.bungee.netty.PacketHandler;
 import net.md_5.bungee.netty.PipelineUtils;
 import net.md_5.bungee.protocol.MinecraftDecoder;
 import net.md_5.bungee.protocol.MinecraftEncoder;
+import net.md_5.bungee.protocol.PacketWrapper;
 import net.md_5.bungee.protocol.Protocol;
 import net.md_5.bungee.protocol.ProtocolConstants;
 import net.md_5.bungee.protocol.packet.Handshake;
 import net.md_5.bungee.protocol.packet.StatusRequest;
 import net.md_5.bungee.protocol.packet.StatusResponse;
+import net.md_5.bungee.util.BufUtil;
+import net.md_5.bungee.util.QuietException;
 
 @RequiredArgsConstructor
 public class PingHandler extends PacketHandler
@@ -50,11 +54,22 @@ public class PingHandler extends PacketHandler
     }
 
     @Override
+    public void handle(PacketWrapper packet) throws Exception
+    {
+        if ( packet.packet == null )
+        {
+            throw new QuietException( "Unexpected packet received during ping process! " + BufUtil.dump( packet.buf, 16 ) );
+        }
+    }
+
+    @Override
     @SuppressFBWarnings("UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR")
     public void handle(StatusResponse statusResponse) throws Exception
     {
         Gson gson = protocol == ProtocolConstants.MINECRAFT_1_7_2 ? BungeeCord.getInstance().gsonLegacy : BungeeCord.getInstance().gson;
-        callback.done( gson.fromJson( statusResponse.getResponse(), ServerPing.class ), null );
+        ServerPing serverPing = gson.fromJson( statusResponse.getResponse(), ServerPing.class );
+        ( (BungeeServerInfo) target ).cachePing( serverPing );
+        callback.done( serverPing, null );
         channel.close();
     }
 

@@ -4,6 +4,7 @@ import com.google.common.base.Preconditions;
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import net.md_5.bungee.api.CommandSender;
 
 /**
@@ -17,6 +18,8 @@ public abstract class Command
     private final String name;
     private final String permission;
     private final String[] aliases;
+    @Setter(AccessLevel.PROTECTED)
+    private String permissionMessage;
 
     /**
      * Construct a new command with no permissions or aliases.
@@ -42,6 +45,7 @@ public abstract class Command
         this.name = name;
         this.permission = permission;
         this.aliases = aliases;
+        this.permissionMessage = null;
     }
 
     /**
@@ -51,4 +55,15 @@ public abstract class Command
      * @param args arguments used to invoke this command
      */
     public abstract void execute(CommandSender sender, String[] args);
+
+    /**
+     * Check if this command can be executed by the given sender.
+     *
+     * @param sender the sender to check
+     * @return whether the sender can execute this
+     */
+    public boolean hasPermission(CommandSender sender)
+    {
+        return permission == null || permission.isEmpty() || sender.hasPermission( permission );
+    }
 }

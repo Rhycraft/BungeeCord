@@ -3,11 +3,17 @@ package net.md_5.bungee.protocol;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufInputStream;
+import io.netty.buffer.ByteBufOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import lombok.RequiredArgsConstructor;
-
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
+import se.llbit.nbt.NamedTag;
+import se.llbit.nbt.Tag;
 
 @RequiredArgsConstructor
 public abstract class DefinedPacket
@@ -73,7 +79,7 @@ public abstract class DefinedPacket
         buf.readBytes( ret );
         return ret;
     }
-    
+
     public static void writeArrayLegacy(byte[] b, ByteBuf buf, boolean allowExtended)
     {
         // (Integer.MAX_VALUE & 0x1FFF9A ) = 2097050 - Forge's current upper limit
@@ -101,6 +107,19 @@ public abstract class DefinedPacket
 
         byte[] ret = new byte[ len ];
         buf.readBytes( ret );
+        return ret;
+    }
+
+    public static int[] readVarIntArray(ByteBuf buf)
+    {
+        int len = readVarInt( buf );
+        int[] ret = new int[ len ];
+
+        for ( int i = 0; i < len; i++ )
+        {
+            ret[i] = readVarInt( buf );
+        }
+
         return ret;
     }
 
@@ -212,6 +231,24 @@ public abstract class DefinedPacket
     public static UUID readUUID(ByteBuf input)
     {
         return new UUID( input.readLong(), input.readLong() );
+    }
+
+    public static Tag readTag(ByteBuf input)
+    {
+        Tag tag = NamedTag.read( new DataInputStream( new ByteBufInputStream( input ) ) );
+        Preconditions.checkArgument( !tag.isError(), "Error reading tag: %s", tag.error() );
+        return tag;
+    }
+
+    public static void writeTag(Tag tag, ByteBuf output)
+    {
+        try
+        {
+            tag.write( new DataOutputStream( new ByteBufOutputStream( output ) ) );
+        } catch ( IOException ex )
+        {
+            throw new RuntimeException( "Exception writing tag", ex );
+        }
     }
 
     public void read(ByteBuf buf)

@@ -51,15 +51,21 @@ public class Configuration implements ProxyConfig
      * Whether we log proxy commands to the proxy log
      */
     private boolean logCommands;
+    private boolean logPings = true;
+    private int remotePingCache = -1;
     private int playerLimit = -1;
     private Collection<String> disabledCommands;
+    private int serverConnectTimeout = 5000;
+    private int remotePingTimeout = 5000;
     private int throttle = 4000;
+    private int throttleLimit = 3;
     private boolean ipForward;
     private Favicon favicon;
     private int compressionThreshold = 256;
     private String customServerName = "HexaCord";
     private boolean alwaysHandlePackets = false;
     private boolean preventProxyConnections;
+    private boolean forgeSupport;
 
     public void load()
     {
@@ -83,13 +89,19 @@ public class Configuration implements ProxyConfig
         uuid = adapter.getString( "stats", uuid );
         onlineMode = adapter.getBoolean( "online_mode", onlineMode );
         logCommands = adapter.getBoolean( "log_commands", logCommands );
+        logPings = adapter.getBoolean( "log_pings", logPings );
+        remotePingCache = adapter.getInt( "remote_ping_cache", remotePingCache );
         playerLimit = adapter.getInt( "player_limit", playerLimit );
+        serverConnectTimeout = adapter.getInt( "server_connect_timeout", serverConnectTimeout );
+        remotePingTimeout = adapter.getInt( "remote_ping_timeout", remotePingTimeout );
         throttle = adapter.getInt( "connection_throttle", throttle );
+        throttleLimit = adapter.getInt( "connection_throttle_limit", throttleLimit );
         ipForward = adapter.getBoolean( "ip_forward", ipForward );
         compressionThreshold = adapter.getInt( "network_compression_threshold", compressionThreshold );
         customServerName = adapter.getString( "custom_server_name", "HexaCord" );
         alwaysHandlePackets = adapter.getBoolean( "always_handle_packets", false );
         preventProxyConnections = adapter.getBoolean( "prevent_proxy_connections", preventProxyConnections );
+        forgeSupport = adapter.getBoolean( "forge_support", forgeSupport );
 
         disabledCommands = new CaseInsensitiveSet( (Collection<String>) adapter.getList( "disabled_commands", Arrays.asList( "disabledcommandhere" ) ) );
 
@@ -155,8 +167,9 @@ public class Configuration implements ProxyConfig
         return customServerName;
     }
 
-	@Override
-	public boolean getAlwaysHandlePackets() {
+    @Override
+    public boolean getAlwaysHandlePackets()
+    {
         return alwaysHandlePackets;
-	}
+    }
 }
