@@ -22,14 +22,7 @@ public class BaseComponentSerializer
 
     protected void deserialize(JsonObject object, BaseComponent component, JsonDeserializationContext context)
     {
-        if ( object.has( "color" ) )
-        {
-            component.setColor( ChatColor.of( object.get( "color" ).getAsString() ) );
-        }
-        if ( object.has( "font" ) )
-        {
-            component.setFont( object.get( "font" ).getAsString() );
-        }
+
         if ( object.has( "bold" ) )
         {
             component.setBold( object.get( "bold" ).getAsBoolean() );
@@ -50,13 +43,14 @@ public class BaseComponentSerializer
         {
             component.setObfuscated( object.get( "obfuscated" ).getAsBoolean() );
         }
+        if ( object.has( "color" ) )
+        {
+            component.setColor( ChatColor.of( object.get( "color" ).getAsString() ) );
+        }
         if ( object.has( "insertion" ) )
         {
+
             component.setInsertion( object.get( "insertion" ).getAsString() );
-        }
-        if ( object.has( "extra" ) )
-        {
-            component.setExtra( Arrays.asList( context.<BaseComponent[]>deserialize( object.get( "extra" ), BaseComponent[].class ) ) );
         }
 
         //Events
@@ -76,12 +70,14 @@ public class BaseComponentSerializer
             for ( String type : Arrays.asList( "value", "contents" ) )
             {
                 if ( !event.has( type ) )
+					
                 {
                     continue;
                 }
                 JsonElement contents = event.get( type );
                 try
                 {
+
 
                     // Plugins previously had support to pass BaseComponent[] into any action.
                     // If the GSON is possible to be parsed as BaseComponent, attempt to parse as so.
@@ -115,11 +111,22 @@ public class BaseComponentSerializer
 
                 // stop the loop as soon as either one is found
                 break;
+				
             }
             if ( hoverEvent != null )
             {
                 component.setHoverEvent( hoverEvent );
             }
+        }
+
+        if ( object.has( "font" ) )
+        {
+            component.setFont( object.get( "font" ).getAsString() );
+        }
+        if ( object.has( "extra" ) )
+        {
+            component.setExtra( Arrays.asList( context.<BaseComponent[]>deserialize( object.get( "extra" ), BaseComponent[].class ) ) );
+
         }
     }
 
@@ -135,14 +142,8 @@ public class BaseComponentSerializer
         {
             Preconditions.checkArgument( !ComponentSerializer.serializedComponents.get().contains( component ), "Component loop" );
             ComponentSerializer.serializedComponents.get().add( component );
-            if ( component.getColorRaw() != null )
-            {
-                object.addProperty( "color", component.getColorRaw().getName() );
-            }
-            if ( component.getFontRaw() != null )
-            {
-                object.addProperty( "font", component.getFontRaw() );
-            }
+
+
             if ( component.isBoldRaw() != null )
             {
                 object.addProperty( "bold", component.isBoldRaw() );
@@ -163,14 +164,13 @@ public class BaseComponentSerializer
             {
                 object.addProperty( "obfuscated", component.isObfuscatedRaw() );
             }
+            if ( component.getColorRaw() != null )
+            {
+                object.addProperty( "color", component.getColorRaw().getName() );
+            }
             if ( component.getInsertion() != null )
             {
                 object.addProperty( "insertion", component.getInsertion() );
-            }
-
-            if ( component.getExtra() != null )
-            {
-                object.add( "extra", context.serialize( component.getExtra() ) );
             }
 
             //Events
@@ -194,6 +194,15 @@ public class BaseComponentSerializer
                             ? component.getHoverEvent().getContents().get( 0 ) : component.getHoverEvent().getContents() ) );
                 }
                 object.add( "hoverEvent", hoverEvent );
+            }
+
+            if ( component.getFontRaw() != null )
+            {
+                object.addProperty( "font", component.getFontRaw() );
+            }
+            if ( component.getExtra() != null )
+            {
+                object.add( "extra", context.serialize( component.getExtra() ) );
             }
         } finally
         {

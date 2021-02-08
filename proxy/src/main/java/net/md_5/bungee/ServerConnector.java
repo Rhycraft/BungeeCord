@@ -147,6 +147,7 @@ public class ServerConnector extends PacketHandler
     public void disconnected(ChannelWrapper channel) throws Exception
     {
         user.getPendingConnects().remove( target );
+
     }
 
     @Override
@@ -157,6 +158,7 @@ public class ServerConnector extends PacketHandler
             throw new QuietException( "Unexpected packet received during server login process!\n" + BufUtil.dump( packet.buf, 16 ) );
         }
     }
+
 
     @Override
     public void handle(LoginSuccess loginSuccess) throws Exception
@@ -284,12 +286,14 @@ public class ServerConnector extends PacketHandler
             user.setDimension( login.getDimension() );
         } else
         {
+
             if ( user.getPendingConnection().getVersion() < ProtocolConstants.MINECRAFT_1_8 )
             {
                 MinecraftOutput out = new MinecraftOutput();
                 out.writeStringUTF8WithoutLengthHeaderBecauseDinnerboneStuffedUpTheMCBrandPacket( ProxyServer.getInstance().getName() + " (" + ProxyServer.getInstance().getVersion() + ")" );
                 user.unsafe().sendPacket( new PluginMessage( "MC|Brand", out.toArray(), handshakeHandler.isServerForge() ) );
             }
+
             user.getServer().setObsolete( true );
             user.getTabListHandler().onServerChange();
 
@@ -330,15 +334,11 @@ public class ServerConnector extends PacketHandler
                 user.unsafe().sendPacket( new Respawn( (Integer) login.getDimension() >= 0 ? -1 : 0, login.getWorldName(), login.getSeed(), login.getDifficulty(), login.getGameMode(), login.getPreviousGameMode(), login.getLevelType(), login.isDebug(), login.isFlat(), false ) );
             }
             user.setDimensionChange( true );
-            if ( user.getPendingConnection().getVersion() < ProtocolConstants.MINECRAFT_1_8 )
-            {
-
-            }
-
             user.unsafe().sendPacket( new Respawn( 1, login.getWorldName(), login.getSeed(), login.getDifficulty(), login.getGameMode(), login.getPreviousGameMode(), login.getLevelType(), login.isDebug(), login.isFlat(), false ) );
             user.unsafe().sendPacket( new Respawn( -1, login.getWorldName(), login.getSeed(), login.getDifficulty(), login.getGameMode(), login.getPreviousGameMode(), login.getLevelType(), login.isDebug(), login.isFlat(), false ) );
             //SendDimSwitch to fix some bug
             user.setServerEntityId( login.getEntityId() );
+
             user.setClientEntityId( login.getEntityId() ); //Forge PACKET Fix
 
             Login modLogin;
@@ -355,7 +355,7 @@ public class ServerConnector extends PacketHandler
             user.unsafe().sendPacket( modLogin );
 
             user.unsafe().sendPacket( new Respawn( login.getDimension(), login.getWorldName(), login.getSeed(), login.getDifficulty(), login.getGameMode(), login.getPreviousGameMode(), login.getLevelType(), login.isDebug(), login.isFlat(), false ) );
-
+          
             if ( user.getPendingConnection().getVersion() >= ProtocolConstants.MINECRAFT_1_14 )
             {
                 user.unsafe().sendPacket( new ViewDistance( login.getViewDistance() ) );
